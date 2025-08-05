@@ -1,4 +1,4 @@
-package com.example.fintech.userservice.security;
+package com.example.fintech.userservice.config;
 
 import com.example.fintech.userservice.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
