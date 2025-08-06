@@ -4,7 +4,7 @@ import com.example.fintech.common.entity.Account;
 import com.example.fintech.common.entity.Transaction;
 import com.example.fintech.common.enums.TransactionStatus;
 import com.example.fintech.common.enums.TransactionType;
-import com.example.fintech.accountservice.repository.AccountRepository;
+import com.example.fintech.transactionservice.repository.AccountRepository;
 import com.example.fintech.transactionservice.repository.TransactionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
