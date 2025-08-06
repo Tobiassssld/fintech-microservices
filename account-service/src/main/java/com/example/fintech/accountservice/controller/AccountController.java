@@ -15,27 +15,28 @@ public class AccountController {
     @Autowired
     private AccountService accountService;
 
-    // 注意：微服务架构中，不再直接获取用户信息
-    // 而是通过参数传递用户ID
-
     @PostMapping("/create")
-    public ResponseEntity<?> createAccount(@RequestParam Long userId,
-                                           @RequestParam String accountType,
-                                           @RequestParam(defaultValue = "USD") String currency) {
+    public ResponseEntity<?> createAccount(@RequestParam("userId") Long userId,
+                                           @RequestParam("accountType") String accountType,
+                                           @RequestParam(value = "currency", defaultValue = "USD") String currency) {
         try {
+            System.out.println("Creating account for userId: " + userId + ", type: " + accountType + ", currency: " + currency);
             Account account = accountService.createAccount(userId, accountType, currency);
             return ResponseEntity.ok(account);
         } catch (RuntimeException e) {
+            System.err.println("Error creating account: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
     @GetMapping("/balance")
-    public ResponseEntity<?> getBalance(@RequestParam Long userId) {
+    public ResponseEntity<?> getBalance(@RequestParam("userId") Long userId) {
         try {
+            System.out.println("Getting balance for userId: " + userId);
             Account account = accountService.getAccountByUserId(userId);
             return ResponseEntity.ok(account);
         } catch (RuntimeException e) {
+            System.err.println("Error getting balance: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
@@ -43,9 +44,11 @@ public class AccountController {
     @PostMapping("/deposit")
     public ResponseEntity<String> deposit(@RequestBody DepositRequest request) {
         try {
+            System.out.println("Deposit request: " + request.getAccountNumber() + ", amount: " + request.getAmount());
             accountService.deposit(request.getAccountNumber(), request.getAmount());
             return ResponseEntity.ok("Deposit successful");
         } catch (RuntimeException e) {
+            System.err.println("Deposit error: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

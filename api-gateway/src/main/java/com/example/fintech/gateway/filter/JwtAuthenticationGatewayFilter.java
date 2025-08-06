@@ -43,6 +43,7 @@ public class JwtAuthenticationGatewayFilter implements GatewayFilter {
         } catch (Exception e) {
             // 如果有日志记录需求，可以添加日志
             System.err.println("JWT validation failed: " + e.getMessage());
+
         }
 
         return handleUnauthorized(exchange);

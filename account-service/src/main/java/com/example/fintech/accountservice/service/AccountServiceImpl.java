@@ -11,8 +11,11 @@ import com.example.fintech.accountservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -25,8 +28,8 @@ public class AccountServiceImpl implements AccountService{
     @Autowired
     private UserRepository userRepository;
 
-    //@Autowired
-    //private TransactionService transactionService;
+    @Autowired
+    private RestTemplate restTemplate;
 
     @Override
     public Account createAccount(Long userId, String accountType, String currency) {
@@ -67,8 +70,8 @@ public class AccountServiceImpl implements AccountService{
     }
 
     @Override
-    public boolean deposit(String accountNumber, BigDecimal amount){
-        if (amount.compareTo(BigDecimal.ZERO) <= 0){
+    public boolean deposit(String accountNumber, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Deposit amount must be positive");
         }
 
@@ -76,20 +79,20 @@ public class AccountServiceImpl implements AccountService{
         account.setBalance(account.getBalance().add(amount));
         accountRepository.save(account);
 
-        //transactionService.createTransaction(null, account.getId(), amount,
-        //        TransactionType.DEPOSIT, "Cash deposit");
+        // 创建交易记录
+        createTransactionRecord(null, account.getId(), amount, "DEPOSIT", "Cash deposit");
 
         return true;
     }
 
     @Override
-    public boolean withdraw(String accountNumber, BigDecimal amount){
-        if (amount.compareTo(BigDecimal.ZERO) <= 0){
+    public boolean withdraw(String accountNumber, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new InvalidTransactionException("withdrawal amount must be positive");
         }
 
         Account account = getAccountByAccountNumber(accountNumber);
-        if (account.getBalance().compareTo(amount) < 0){
+        if (account.getBalance().compareTo(amount) < 0) {
             throw new InsufficientFundsException(
                     String.format("Insufficient funds. Available: %s, Requested: %s",
                             account.getBalance(), amount));
@@ -98,29 +101,52 @@ public class AccountServiceImpl implements AccountService{
         account.setBalance(account.getBalance().subtract(amount));
         accountRepository.save(account);
 
-        //transactionService.createTransaction(account.getId(), null, amount,
-        //       TransactionType.WITHDRAWAL, "Cash withdrawal");
+        // 创建交易记录
+        createTransactionRecord(account.getId(), null, amount, "WITHDRAWAL", "Cash withdrawal");
+
         return true;
     }
 
-
     @Override
-    public boolean transfer(String fromAccount, String toAccount, BigDecimal amount){
-        if (amount.compareTo(BigDecimal.ZERO) <= 0){
+    public boolean transfer(String fromAccount, String toAccount, BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new AccountNotFoundException("Transfer amount must be positive.");
         }
 
         Account fromAcc = getAccountByAccountNumber(fromAccount);
         Account toAcc = getAccountByAccountNumber(toAccount);
 
-        //atomic operation
+        // 原子操作
         withdraw(fromAccount, amount);
         deposit(toAccount, amount);
 
-        //transactionService.createTransaction(fromAcc.getId(), toAcc.getId(), amount,
-        //        TransactionType.TRANSFER, "Transfer between accounts");
+        // 创建转账交易记录
+        createTransactionRecord(fromAcc.getId(), toAcc.getId(), amount, "TRANSFER", "Transfer between accounts");
 
         return true;
+    }
+
+    // 新增方法：创建交易记录
+    private void createTransactionRecord(Long fromAccountId, Long toAccountId,
+                                         BigDecimal amount, String type, String description) {
+        try {
+            // 构建请求数据
+            Map<String, Object> transactionData = new HashMap<>();
+            transactionData.put("fromAccountId", fromAccountId);
+            transactionData.put("toAccountId", toAccountId);
+            transactionData.put("amount", amount);
+            transactionData.put("type", type);
+            transactionData.put("description", description);
+
+            // 调用 Transaction Service
+            String transactionServiceUrl = "http://localhost:8083/api/transactions/create";
+            restTemplate.postForObject(transactionServiceUrl, transactionData, String.class);
+
+            System.out.println("Transaction record created: " + type + " - " + amount);
+        } catch (Exception e) {
+            System.err.println("Failed to create transaction record: " + e.getMessage());
+            // 不抛出异常，避免影响主要业务流程
+        }
     }
 
     @Override

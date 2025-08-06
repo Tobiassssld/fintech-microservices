@@ -1,7 +1,7 @@
-package com.example.fintech.accountservice.config;
+package com.example.fintech.transactionservice.config;
 
-import com.example.fintech.accountservice.filter.UserContextFilter;
 import com.example.fintech.common.config.BaseSecurityConfig;
+import com.example.fintech.transactionservice.filter.UserContextFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
