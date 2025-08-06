@@ -24,28 +24,10 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
-    //Generating JWT Token
-
-    public String generateToken(String username){
-        return createToken(username);
-    }
-
-    private String createToken(String subject) {
-        long currentTime = System.currentTimeMillis();
-        return Jwts.builder()
-                .setSubject(subject)
-                .setIssuedAt(new Date(currentTime))
-                .setExpiration(new Date(currentTime + expiration))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    //extract username from token
     public String extractUsername(String token){
         return extractClaim(token, Claims::getSubject);
     }
 
-    //extract expiredtime from token
     public Date extractExpiration(String token){
         return extractClaim(token, Claims::getExpiration);
     }
@@ -63,16 +45,12 @@ public class JwtUtil {
                 .getBody();
     }
 
-    //check if the token is expired
     private Boolean isTokenExpired(String token){
         return extractExpiration(token).before(new Date());
     }
 
-    //validate the token
-    public Boolean validateToken(String token,String username){
+    public Boolean validateToken(String token, String username){
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
-
-
 }

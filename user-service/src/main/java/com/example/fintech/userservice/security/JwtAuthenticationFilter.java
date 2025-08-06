@@ -28,6 +28,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
 
+        String requestPath = request.getRequestURI();
+
+        // 跳过注册和登录接口
+        if (requestPath.equals("/user/register") || requestPath.equals("/user/login")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
         final String authorizationHeader = request.getHeader("Authorization");
 
         String username = null;
@@ -51,7 +59,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             System.out.println("Token valid: " + isValid);
 
             if (isValid) {
-                // add role_user
                 List<SimpleGrantedAuthority> authorities =
                         Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
 
