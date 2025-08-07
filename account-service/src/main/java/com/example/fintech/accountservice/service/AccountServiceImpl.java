@@ -12,6 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -130,6 +135,12 @@ public class AccountServiceImpl implements AccountService{
     private void createTransactionRecord(Long fromAccountId, Long toAccountId,
                                          BigDecimal amount, String type, String description) {
         try {
+            System.out.println("=== Creating Transaction Record ===");
+            System.out.println("From Account ID: " + fromAccountId);
+            System.out.println("To Account ID: " + toAccountId);
+            System.out.println("Amount: " + amount);
+            System.out.println("Type: " + type);
+
             // 构建请求数据
             Map<String, Object> transactionData = new HashMap<>();
             transactionData.put("fromAccountId", fromAccountId);
@@ -138,14 +149,29 @@ public class AccountServiceImpl implements AccountService{
             transactionData.put("type", type);
             transactionData.put("description", description);
 
-            // 调用 Transaction Service
-            String transactionServiceUrl = "http://localhost:8083/api/transactions/create";
-            restTemplate.postForObject(transactionServiceUrl, transactionData, String.class);
+            // 获取当前用户信息（从Security Context）
+            String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
+            System.out.println("Current authenticated user: " + currentUser);
 
-            System.out.println("Transaction record created: " + type + " - " + amount);
+            // 构建请求头，传递用户信息
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-User-Id", currentUser);
+            headers.set("X-User-Roles", "USER");
+
+            HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(transactionData, headers);
+
+            // 使用服务名调用
+            String transactionServiceUrl = "http://TRANSACTION-SERVICE/api/transactions/create";
+            System.out.println("Calling URL: " + transactionServiceUrl);
+
+            ResponseEntity<String> response = restTemplate.postForEntity(transactionServiceUrl, requestEntity, String.class);
+            System.out.println("Transaction Service Response: " + response.getBody());
+
+            System.out.println("Transaction record created successfully: " + type + " - " + amount);
         } catch (Exception e) {
             System.err.println("Failed to create transaction record: " + e.getMessage());
-            // 不抛出异常，避免影响主要业务流程
+            e.printStackTrace();
         }
     }
 

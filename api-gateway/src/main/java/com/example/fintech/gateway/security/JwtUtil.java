@@ -14,7 +14,7 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret:myDefaultSecretKeyForFintech2025DevelopmentOnly}")
+    @Value("${jwt.secret:mySecretKeyForFintech2025DevelopmentOnly12345678901234567890}")
     private String secretKey;
 
     @Value("${jwt.expiration:86400000}")
