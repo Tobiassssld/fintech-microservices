@@ -2,10 +2,9 @@ package com.example.fintech.accountservice.service;
 
 import com.example.fintech.common.entity.Account;
 import com.example.fintech.common.entity.User;
-import com.example.fintech.common.enums.TransactionType;
-import com.example.fintech.accountservice.exception.AccountNotFoundException;
-import com.example.fintech.accountservice.exception.InsufficientFundsException;
-import com.example.fintech.accountservice.exception.InvalidTransactionException;
+import com.example.fintech.common.exception.AccountNotFoundException;
+import com.example.fintech.common.exception.InsufficientFundsException;
+import com.example.fintech.common.exception.InvalidTransactionException;
 import com.example.fintech.accountservice.repository.AccountRepository;
 import com.example.fintech.accountservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;

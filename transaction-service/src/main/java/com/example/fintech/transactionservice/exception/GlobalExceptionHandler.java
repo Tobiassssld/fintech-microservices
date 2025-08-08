@@ -7,9 +7,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import com.example.fintech.accountservice.exception.AccountNotFoundException;
-import com.example.fintech.accountservice.exception.InsufficientFundsException;
-import com.example.fintech.accountservice.exception.InvalidTransactionException;
+import com.example.fintech.common.exception.AccountNotFoundException;
+import com.example.fintech.common.exception.InsufficientFundsException;
+import com.example.fintech.common.exception.InvalidTransactionException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -46,6 +46,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleAccountNotFound(AccountNotFoundException e) {
+        logger.error("Account not found: ", e);
+
+        Map<String, Object> errorResponse = new HashMap<>();
+        errorResponse.put("error", "ACCOUNT_NOT_FOUND");
+        errorResponse.put("message", e.getMessage());
+        errorResponse.put("timestamp", LocalDateTime.now());
+        errorResponse.put("status", HttpStatus.NOT_FOUND.value());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<Map<String, Object>> handleMethodNotSupported(HttpRequestMethodNotSupportedException e) {
         logger.error("Method not supported: ", e);
@@ -61,7 +74,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e){
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException e) {
         logger.error("Runtime exception occurred: ", e);
 
         Map<String, Object> errorResponse = new HashMap<>();
@@ -74,13 +87,13 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(Exception e){
-        logger.error("Unexcepted error occurred: ", e);
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(Exception e) {
+        logger.error("Unexpected error occurred: ", e);
 
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("error", "INTERNAL_SERVER_ERROR");
-        errorResponse.put("message", "An unexcepted error occurred. PLease try again later.");
-        errorResponse.put("timesteap", LocalDateTime.now());
+        errorResponse.put("message", "An unexpected error occurred. Please try again later.");
+        errorResponse.put("timestamp", LocalDateTime.now());
         errorResponse.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);

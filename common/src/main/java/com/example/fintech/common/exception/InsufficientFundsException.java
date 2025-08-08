@@ -1,4 +1,4 @@
-package com.example.fintech.accountservice.exception;
+package com.example.fintech.common.exception;
 
 public class InsufficientFundsException extends RuntimeException{
     public InsufficientFundsException(String message){
