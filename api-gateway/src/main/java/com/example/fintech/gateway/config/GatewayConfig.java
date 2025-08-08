@@ -22,25 +22,25 @@ public class GatewayConfig {
                         .path("/api/users/register", "/api/users/login")
                         .and()
                         .method(HttpMethod.POST)
-                        .uri("http://localhost:8081"))
+                        .uri("lb://USER-SERVICE"))
 
                 // User Service - 需要认证的路由
                 .route("user-protected", r -> r
                         .path("/api/users/**")
                         .filters(f -> f.filter(jwtAuthFilter))
-                        .uri("http://localhost:8081"))
+                        .uri("lb://USER-SERVICE"))
 
                 // Account Service - 全部需要认证
                 .route("account-service", r -> r
                         .path("/api/accounts/**")
                         .filters(f -> f.filter(jwtAuthFilter))
-                        .uri("http://localhost:8082"))
+                        .uri("lb://ACCOUNT-SERVICE"))
 
                 // Transaction Service - 全部需要认证
                 .route("transaction-service", r -> r
                         .path("/api/transactions/**")
                         .filters(f -> f.filter(jwtAuthFilter))
-                        .uri("http://localhost:8083"))
+                        .uri("lb://TRANSACTION-SERVICE"))
 
                 .build();
     }
