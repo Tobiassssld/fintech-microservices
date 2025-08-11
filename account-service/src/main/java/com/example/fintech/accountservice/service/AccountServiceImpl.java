@@ -2,9 +2,12 @@ package com.example.fintech.accountservice.service;
 
 import com.example.fintech.common.entity.Account;
 import com.example.fintech.common.entity.User;
+import com.example.fintech.common.event.AccountBalanceEvent;
+import com.example.fintech.common.event.NotificationEvent;
 import com.example.fintech.common.exception.AccountNotFoundException;
 import com.example.fintech.common.exception.InsufficientFundsException;
 import com.example.fintech.common.exception.InvalidTransactionException;
+import com.example.fintech.common.service.EventPublisher;
 import com.example.fintech.accountservice.repository.AccountRepository;
 import com.example.fintech.accountservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -34,6 +38,9 @@ public class AccountServiceImpl implements AccountService{
 
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private EventPublisher eventPublisher;
 
     @Override
     public Account createAccount(Long userId, String accountType, String currency) {
@@ -52,7 +59,20 @@ public class AccountServiceImpl implements AccountService{
         account.setAccountType(accountType);
         account.setCurrency(currency);
 
-        return accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
+
+        NotificationEvent notificationEvent = new NotificationEvent(
+                userId.toString(),
+                "Account Created",
+                "your" + accountType + " account has been created successfully. account number: " + savedAccount.getAccountNumber(),
+                "EMAIL",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishNotificationEvent(notificationEvent);
+
+        return savedAccount;
+
+        //return accountRepository.save(account);
     }
 
     @Override
@@ -80,8 +100,30 @@ public class AccountServiceImpl implements AccountService{
         }
 
         Account account = getAccountByAccountNumber(accountNumber);
-        account.setBalance(account.getBalance().add(amount));
+        BigDecimal oldBalance = account.getBalance();
+        BigDecimal newBalance = oldBalance.add(amount);
+
+        account.setBalance(newBalance);
         accountRepository.save(account);
+
+        //create AccountBalance Event
+        AccountBalanceEvent balanceEvent = new AccountBalanceEvent(
+                accountNumber,
+                oldBalance,
+                newBalance,
+                "DEPOSIT",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishAccountBalanceEvent(balanceEvent);
+
+        NotificationEvent notificationEvent = new NotificationEvent(
+                account.getUser().getId().toString(),
+                "Deposit Successful",
+                String.format("Deposit of %s completed. New Balance: %s", amount, newBalance),
+                "EMAIL",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishNotificationEvent(notificationEvent);
 
         // 创建交易记录
         createTransactionRecord(null, account.getId(), amount, "DEPOSIT", "Cash deposit");
@@ -96,14 +138,38 @@ public class AccountServiceImpl implements AccountService{
         }
 
         Account account = getAccountByAccountNumber(accountNumber);
-        if (account.getBalance().compareTo(amount) < 0) {
+        BigDecimal oldBalance = account.getBalance();
+
+
+        if (oldBalance.compareTo(amount) < 0) {
             throw new InsufficientFundsException(
                     String.format("Insufficient funds. Available: %s, Requested: %s",
-                            account.getBalance(), amount));
+                            oldBalance, amount));
         }
 
-        account.setBalance(account.getBalance().subtract(amount));
+        BigDecimal newBalance = oldBalance.subtract(amount);
+        account.setBalance(newBalance);
+        //account.setBalance(account.getBalance().subtract(amount));
         accountRepository.save(account);
+
+        //create AccountBalance Event
+        AccountBalanceEvent balanceEvent = new AccountBalanceEvent(
+                accountNumber,
+                oldBalance,
+                newBalance,
+                "WITHDRAWAL",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishAccountBalanceEvent(balanceEvent);
+
+        NotificationEvent notificationEvent = new NotificationEvent(
+                account.getUser().getId().toString(),
+                "Withdrawal Successful",
+                String.format("Withdraw of %s completed. New Balance: %s", amount, newBalance),
+                "EMAIL",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishNotificationEvent(notificationEvent);
 
         // 创建交易记录
         createTransactionRecord(account.getId(), null, amount, "WITHDRAWAL", "Cash withdrawal");
@@ -117,12 +183,54 @@ public class AccountServiceImpl implements AccountService{
             throw new AccountNotFoundException("Transfer amount must be positive.");
         }
 
+
         Account fromAcc = getAccountByAccountNumber(fromAccount);
         Account toAcc = getAccountByAccountNumber(toAccount);
 
+        if (fromAcc.getBalance().compareTo(amount)<0) {
+            throw new InsufficientFundsException("Insufficient funds for transfer");
+        }
+
+        BigDecimal fromOldBalance = fromAcc.getBalance();
+        BigDecimal toOldBalance = toAcc.getBalance();
+
+        fromAcc.setBalance(fromOldBalance.subtract(amount));
+        toAcc.setBalance(toOldBalance.add(amount));
+
+        accountRepository.save(fromAcc);
+        accountRepository.save(toAcc);
+
+        AccountBalanceEvent fromBalanceEvent = new AccountBalanceEvent(
+                fromAccount,
+                fromOldBalance,
+                fromAcc.getBalance(),
+                "TRANSFER_OUT",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishAccountBalanceEvent(fromBalanceEvent);
+
+        AccountBalanceEvent toBalanceEvent = new AccountBalanceEvent(
+                toAccount,
+                toOldBalance,
+                toAcc.getBalance(),
+                "TRANSFER_IN",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishAccountBalanceEvent(fromBalanceEvent);
+
+        NotificationEvent toNotification = new NotificationEvent(
+                fromAcc.getUser().getId().toString(),
+                "Transfer Sent",
+                String.format("Transfer of %s sent to %s. New Balance %s", amount, toAccount, fromAcc.getBalance()),
+                "EMAIL",
+                LocalDateTime.now()
+        );
+        eventPublisher.publishNotificationEvent(toNotification);
+
+
         // 原子操作
-        withdraw(fromAccount, amount);
-        deposit(toAccount, amount);
+        //withdraw(fromAccount, amount);
+        //deposit(toAccount, amount);
 
         // 创建转账交易记录
         createTransactionRecord(fromAcc.getId(), toAcc.getId(), amount, "TRANSFER", "Transfer between accounts");

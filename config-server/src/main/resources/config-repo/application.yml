@@ -10,6 +10,8 @@ spring:
     username: guest
     password: guest
     virtual-host: /
+    connection-timeout: 30000
+    requested-heartbeat: 30
 
 eureka:
   client:
@@ -26,3 +28,5 @@ logging:
   level:
     org.springframework.cloud: INFO
     org.springframework.amqp: DEBUG
+    org.springframework.amqp.rabbit: DEBUG
+    com.example.fintech.common.config: DEBUG

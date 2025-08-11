@@ -3,101 +3,116 @@ package com.example.fintech.common.config;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import javax.management.Query;
 
 @Configuration
 public class RabbitMQConfig {
 
-    //exchange
+    // Exchange names
     public static final String TRANSACTION_EXCHANGE = "transaction.exchange";
-    public static final String ACCOUNT_EXCHANGE = "accoount.exchange";
+    public static final String ACCOUNT_EXCHANGE = "account.exchange";
     public static final String NOTIFICATION_EXCHANGE = "notification.exchange";
 
-    //queue
+    // Queue names
     public static final String TRANSACTION_QUEUE = "transaction.queue";
     public static final String ACCOUNT_BALANCE_QUEUE = "account.balance.queue";
     public static final String NOTIFICATION_QUEUE = "notification.queue";
     public static final String AUDIT_QUEUE = "audit.queue";
 
-    //routing
-
+    // Routing keys
     public static final String TRANSACTION_ROUTING_KEY = "transaction.created";
     public static final String BALANCE_ROUTING_KEY = "account.balance.updated";
     public static final String NOTIFICATION_ROUTING_KEY = "notification.send";
 
-    //exchanges
-
+    // 关键：添加RabbitAdmin，设置自动启动
     @Bean
-    public TopicExchange transactionExchange(){
-        return new TopicExchange(TRANSACTION_EXCHANGE);
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        RabbitAdmin admin = new RabbitAdmin(connectionFactory);
+        admin.setAutoStartup(true);  // 这是关键设置
+        return admin;
+    }
+
+    // Exchanges
+    @Bean
+    public TopicExchange transactionExchange() {
+        return new TopicExchange(TRANSACTION_EXCHANGE, true, false);
     }
 
     @Bean
-    public TopicExchange accountExchange(){
-        return new TopicExchange(ACCOUNT_EXCHANGE);
+    public TopicExchange accountExchange() {
+        return new TopicExchange(ACCOUNT_EXCHANGE, true, false);
     }
 
     @Bean
-    public TopicExchange notificationExchange(){
-        return new TopicExchange(NOTIFICATION_EXCHANGE);
+    public TopicExchange notificationExchange() {
+        return new TopicExchange(NOTIFICATION_EXCHANGE, true, false);
     }
 
-    //QUEUES
-
+    // Queues
     @Bean
-    public Queue transactionQueue(){
+    public Queue transactionQueue() {
         return QueueBuilder.durable(TRANSACTION_QUEUE).build();
     }
 
     @Bean
-    public Queue accountQueue(){
+    public Queue accountBalanceQueue() {
         return QueueBuilder.durable(ACCOUNT_BALANCE_QUEUE).build();
     }
 
     @Bean
-    public Queue notificationQueue(){
+    public Queue notificationQueue() {
         return QueueBuilder.durable(NOTIFICATION_QUEUE).build();
     }
 
     @Bean
-    public Queue auditQueue(){
+    public Queue auditQueue() {
         return QueueBuilder.durable(AUDIT_QUEUE).build();
     }
 
-    //binding
-
-    @Bean public Binding transactionBinding() {
+    // Bindings
+    @Bean
+    public Binding transactionBinding() {
         return BindingBuilder
                 .bind(transactionQueue())
                 .to(transactionExchange())
                 .with(TRANSACTION_ROUTING_KEY);
     }
 
-    @Bean public Binding balanceBinding() {
+    @Bean
+    public Binding balanceBinding() {
+        return BindingBuilder
+                .bind(accountBalanceQueue())
+                .to(accountExchange())
+                .with(BALANCE_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding notificationBinding() {
         return BindingBuilder
                 .bind(notificationQueue())
                 .to(notificationExchange())
                 .with(NOTIFICATION_ROUTING_KEY);
     }
 
-    @Bean public Binding auditBinding() {
+    @Bean
+    public Binding auditBinding() {
         return BindingBuilder
                 .bind(auditQueue())
                 .to(transactionExchange())
                 .with("transaction.*");
     }
 
+    // JSON converter
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
+    // RabbitTemplate with JSON converter
     @Bean
     public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
@@ -105,6 +120,7 @@ public class RabbitMQConfig {
         return template;
     }
 
+    // Listener container factory
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
@@ -112,6 +128,4 @@ public class RabbitMQConfig {
         factory.setMessageConverter(messageConverter());
         return factory;
     }
-
-
 }
