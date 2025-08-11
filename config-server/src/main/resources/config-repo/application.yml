@@ -4,6 +4,12 @@ spring:
       ddl-auto: update
     show-sql: false
     database-platform: org.hibernate.dialect.MySQLDialect
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
 
 eureka:
   client:
@@ -19,3 +25,4 @@ jwt:
 logging:
   level:
     org.springframework.cloud: INFO
+    org.springframework.amqp: DEBUG

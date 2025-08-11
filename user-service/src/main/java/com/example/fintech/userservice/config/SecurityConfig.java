@@ -37,4 +37,3 @@ public class SecurityConfig extends BaseSecurityConfig {
         return http.build();
     }
 }
-
