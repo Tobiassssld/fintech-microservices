@@ -12,6 +12,15 @@ spring:
     virtual-host: /
     connection-timeout: 30000
     requested-heartbeat: 30
+    # 启用发布确认
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true  # 确保消息必须被路由
+    listener:
+      simple:
+        acknowledge-mode: manual  # 手动确认模式
+        prefetch: 1
 
 eureka:
   client:

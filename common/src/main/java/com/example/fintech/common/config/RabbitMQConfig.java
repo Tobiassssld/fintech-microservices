@@ -28,11 +28,10 @@ public class RabbitMQConfig {
     public static final String BALANCE_ROUTING_KEY = "account.balance.updated";
     public static final String NOTIFICATION_ROUTING_KEY = "notification.send";
 
-    // 关键：添加RabbitAdmin，设置自动启动
     @Bean
     public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
         RabbitAdmin admin = new RabbitAdmin(connectionFactory);
-        admin.setAutoStartup(true);  // 这是关键设置
+        admin.setAutoStartup(true);
         return admin;
     }
 
