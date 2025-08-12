@@ -19,13 +19,16 @@ public class SecurityConfig extends BaseSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        configureBaseSecurity(http)
+        return configureBaseSecurity(http)
                 .authorizeHttpRequests(auth -> auth
+                        // 公共端点
                         .requestMatchers(getPublicEndpoints()).permitAll()
+                        // 测试端点 - 最高优先级
+                        .requestMatchers("/api/test/**").permitAll()
+                        // 其他请求需要认证
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(userContextFilter, UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+                .addFilterBefore(userContextFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 }
