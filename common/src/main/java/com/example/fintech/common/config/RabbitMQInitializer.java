@@ -56,9 +56,9 @@ public class RabbitMQInitializer implements ApplicationRunner {
                             .with("transaction.*")
             );
 
-            System.out.println("✅ RabbitMQ Infrastructure initialized successfully!");
+            System.out.println("RabbitMQ Infrastructure initialized successfully!");
 
-            // 验证队列是否创建成功
+
             System.out.println("Verifying queues...");
             System.out.println("- Transaction Queue: " + rabbitAdmin.getQueueInfo(RabbitMQConfig.TRANSACTION_QUEUE));
             System.out.println("- Account Balance Queue: " + rabbitAdmin.getQueueInfo(RabbitMQConfig.ACCOUNT_BALANCE_QUEUE));
@@ -66,7 +66,7 @@ public class RabbitMQInitializer implements ApplicationRunner {
             System.out.println("- Audit Queue: " + rabbitAdmin.getQueueInfo(RabbitMQConfig.AUDIT_QUEUE));
 
         } catch (Exception e) {
-            System.err.println("❌ Failed to initialize RabbitMQ Infrastructure: " + e.getMessage());
+            System.err.println("Failed to initialize RabbitMQ Infrastructure: " + e.getMessage());
             e.printStackTrace();
         }
     }
