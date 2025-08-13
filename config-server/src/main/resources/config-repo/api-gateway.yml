@@ -7,6 +7,14 @@ spring:
   cloud:
     gateway:
       routes:
+        # 测试端点路由 - 最高优先级
+        - id: test-endpoints
+          uri: lb://TRANSACTION-SERVICE
+          predicates:
+            - Path=/api/test/**
+          filters:
+            - StripPrefix=0
+
         # 用户注册和登录（不需要认证）
         - id: user-public
           uri: lb://USER-SERVICE
@@ -14,19 +22,19 @@ spring:
             - Path=/api/users/register,/api/users/login
             - Method=POST
 
-        # 用户其他接口（暂时不使用认证）
+        # 用户其他接口
         - id: user-protected
           uri: lb://USER-SERVICE
           predicates:
             - Path=/api/users/**
 
-        # 账户服务（暂时不使用认证）
+        # 账户服务
         - id: account-service
           uri: lb://ACCOUNT-SERVICE
           predicates:
             - Path=/api/accounts/**
 
-        # 交易服务（暂时不使用认证）
+        # 交易服务 - 通用路由
         - id: transaction-service
           uri: lb://TRANSACTION-SERVICE
           predicates:
