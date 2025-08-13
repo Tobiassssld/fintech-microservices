@@ -6,6 +6,7 @@ import com.example.fintech.common.event.AccountBalanceEvent;
 import com.example.fintech.common.event.TransactionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.ReturnedMessage;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,33 +21,40 @@ import java.util.UUID;
 public class EventPublisher {
 
     private static final Logger logger = LoggerFactory.getLogger(EventPublisher.class);
+    private static final int MAX_RETRY_ATTEMPTS = 3;
 
     @Autowired
     private RabbitTemplate rabbitTemplate;
 
     @PostConstruct
     public void init() {
-        // 启用发布确认
         rabbitTemplate.setConfirmCallback((correlationData, ack, cause) -> {
             if (ack) {
-                logger.info(" Message confirmed: {}", correlationData);
+                logger.info("Message confirmed: {}", correlationData.getId());
             } else {
-                logger.error(" Message not confirmed: {}, cause: {}", correlationData, cause);
+                logger.error("Message not confirmed: {}, cause: {}", correlationData.getId(), cause);
+                // Handle failed message confirmation
+                handleMessageConfirmationFailure(correlationData, cause);
             }
         });
 
-        // 设置返回回调（当消息无法路由时）
         rabbitTemplate.setReturnsCallback(returned -> {
-            logger.error(" Message returned: {}", returned.getMessage());
+            logger.error("Message returned: {}, reply: {}",
+                    returned.getMessage(), returned.getReplyText());
+            // Handle returned message
+            handleReturnedMessage(returned);
         });
     }
 
     public void publishTransactionEvent(TransactionEvent event) {
-        try {
-            logger.info(" Publishing transaction event: {}", event.getTransactionId());
-            logger.debug("Event details: {}", event);
-
+        publishEventWithRetry(() -> {
             CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.TRANSACTION_EXCHANGE,
+                    RabbitMQConfig.TRANSACTION_ROUTING_KEY,
+                    event,
+                    correlationData
+            );
 
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.TRANSACTION_EXCHANGE,
@@ -55,19 +63,12 @@ public class EventPublisher {
                     correlationData
             );
 
-            logger.info(" Transaction event sent successfully to exchange: {}, routing key: {}",
-                    RabbitMQConfig.TRANSACTION_EXCHANGE, RabbitMQConfig.TRANSACTION_ROUTING_KEY);
-        } catch (AmqpException e) {
-            logger.error(" Failed to publish transaction event", e);
-            throw e;
-        }
+            logger.info("Transaction event published: {}", event.getTransactionId());
+        }, "Transaction event for: " + event.getTransactionId());
     }
 
     public void publishAccountBalanceEvent(AccountBalanceEvent event) {
-        try {
-            logger.info(" Publishing balance event for account: {}", event.getAccountNumber());
-            logger.debug("Event details: {}", event);
-
+        publishEventWithRetry(() -> {
             CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
 
             rabbitTemplate.convertAndSend(
@@ -77,18 +78,12 @@ public class EventPublisher {
                     correlationData
             );
 
-            logger.info("Balance event sent successfully");
-        } catch (AmqpException e) {
-            logger.error(" Failed to publish balance event", e);
-            throw e;
-        }
+            logger.info("Balance event published for account: {}", event.getAccountNumber());
+        }, "Balance event for account: " + event.getAccountNumber());
     }
 
     public void publishNotificationEvent(NotificationEvent event) {
-        try {
-            logger.info("Publishing notification event for user: {}", event.getUserId());
-            logger.debug("Event details: {}", event);
-
+        publishEventWithRetry(() -> {
             CorrelationData correlationData = new CorrelationData(UUID.randomUUID().toString());
 
             rabbitTemplate.convertAndSend(
@@ -98,10 +93,46 @@ public class EventPublisher {
                     correlationData
             );
 
-            logger.info("Notification event sent successfully");
-        } catch (AmqpException e) {
-            logger.error("Failed to publish notification event", e);
-            throw e;
+            logger.info("Notification event published for user: {}", event.getUserId());
+        }, "Notification event for user: " + event.getUserId());
+    }
+
+    private void publishEventWithRetry(Runnable publishAction, String eventDescription) {
+        int attempts = 0;
+        Exception lastException = null;
+
+        while (attempts < MAX_RETRY_ATTEMPTS) {
+            try {
+                publishAction.run();
+                return; // Success
+            } catch (Exception e) {
+                lastException = e;
+                attempts++;
+                logger.warn("Failed to publish event (attempt {}/{}): {}",
+                        attempts, MAX_RETRY_ATTEMPTS, eventDescription);
+
+                if (attempts < MAX_RETRY_ATTEMPTS) {
+                    try {
+                        Thread.sleep(1000 * attempts); // Exponential backoff
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Event publishing interrupted", ie);
+                    }
+                }
+            }
         }
+
+        logger.error("Failed to publish event after {} attempts: {}", MAX_RETRY_ATTEMPTS, eventDescription);
+        throw new RuntimeException("Event publishing failed after retries", lastException);
+    }
+
+    private void handleMessageConfirmationFailure(CorrelationData correlationData, String cause) {
+        // Could implement dead letter queue or retry logic here
+        logger.error("Implementing failure handling for message: {}", correlationData.getId());
+    }
+
+    private void handleReturnedMessage(ReturnedMessage returned) {
+        // Could implement message reprocessing or dead letter handling
+        logger.error("Implementing returned message handling");
     }
 }

@@ -17,6 +17,11 @@ public class RabbitMQConfig {
     public static final String ACCOUNT_EXCHANGE = "account.exchange";
     public static final String NOTIFICATION_EXCHANGE = "notification.exchange";
 
+    // Dead Letter Queue names
+    public static final String TRANSACTION_DLQ = "transaction.dlq";
+    public static final String ACCOUNT_BALANCE_DLQ = "account.balance.dlq";
+    public static final String NOTIFICATION_DLQ = "notification.dlq";
+
     // Queue names
     public static final String TRANSACTION_QUEUE = "transaction.queue";
     public static final String ACCOUNT_BALANCE_QUEUE = "account.balance.queue";
@@ -51,10 +56,30 @@ public class RabbitMQConfig {
         return new TopicExchange(NOTIFICATION_EXCHANGE, true, false);
     }
 
+    // Dead Letter Queues
+    @Bean
+    public Queue transactionDeadLetterQueue() {
+        return QueueBuilder.durable(TRANSACTION_DLQ).build();
+    }
+
+    @Bean
+    public Queue accountBalanceDeadLetterQueue() {
+        return QueueBuilder.durable(ACCOUNT_BALANCE_DLQ).build();
+    }
+
+    @Bean
+    public Queue notificationDeadLetterQueue() {
+        return QueueBuilder.durable(NOTIFICATION_DLQ).build();
+    }
+
     // Queues
     @Bean
     public Queue transactionQueue() {
-        return QueueBuilder.durable(TRANSACTION_QUEUE).build();
+        return QueueBuilder.durable(TRANSACTION_QUEUE)
+                .withArgument("x-dead-letter-exchange", TRANSACTION_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", "transaction.failed")
+                .withArgument("x-message-ttl", 300000) // 5 minutes TTL
+                .build();
     }
 
     @Bean
@@ -103,6 +128,14 @@ public class RabbitMQConfig {
                 .bind(auditQueue())
                 .to(transactionExchange())
                 .with("transaction.*");
+    }
+
+    @Bean
+    public Binding transactionDlqBinding() {
+        return BindingBuilder
+                .bind(transactionDeadLetterQueue())
+                .to(transactionExchange())
+                .with("transaction.failed");
     }
 
     // JSON converter

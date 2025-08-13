@@ -125,7 +125,7 @@ public class AccountServiceImpl implements AccountService{
         );
         eventPublisher.publishNotificationEvent(notificationEvent);
 
-        // 创建交易记录
+        // create transaction record
         createTransactionRecord(null, account.getId(), amount, "DEPOSIT", "Cash deposit");
 
         return true;
@@ -171,7 +171,7 @@ public class AccountServiceImpl implements AccountService{
         );
         eventPublisher.publishNotificationEvent(notificationEvent);
 
-        // 创建交易记录
+        // create transaction record
         createTransactionRecord(account.getId(), null, amount, "WITHDRAWAL", "Cash withdrawal");
 
         return true;
@@ -228,17 +228,17 @@ public class AccountServiceImpl implements AccountService{
         eventPublisher.publishNotificationEvent(toNotification);
 
 
-        // 原子操作
+        //
         //withdraw(fromAccount, amount);
         //deposit(toAccount, amount);
 
-        // 创建转账交易记录
+        // create transaction record
         createTransactionRecord(fromAcc.getId(), toAcc.getId(), amount, "TRANSFER", "Transfer between accounts");
 
         return true;
     }
 
-    // 新增方法：创建交易记录
+    // create transaction record
     private void createTransactionRecord(Long fromAccountId, Long toAccountId,
                                          BigDecimal amount, String type, String description) {
         try {
@@ -248,7 +248,7 @@ public class AccountServiceImpl implements AccountService{
             System.out.println("Amount: " + amount);
             System.out.println("Type: " + type);
 
-            // 构建请求数据
+            // create request record
             Map<String, Object> transactionData = new HashMap<>();
             transactionData.put("fromAccountId", fromAccountId);
             transactionData.put("toAccountId", toAccountId);
@@ -256,11 +256,11 @@ public class AccountServiceImpl implements AccountService{
             transactionData.put("type", type);
             transactionData.put("description", description);
 
-            // 获取当前用户信息（从Security Context）
+            // get currentuser（从Security Context）
             String currentUser = SecurityContextHolder.getContext().getAuthentication().getName();
             System.out.println("Current authenticated user: " + currentUser);
 
-            // 构建请求头，传递用户信息
+            //  crreate request head
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("X-User-Id", currentUser);

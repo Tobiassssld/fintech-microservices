@@ -22,7 +22,7 @@ public class JwtAuthenticationGatewayFilter implements GatewayFilter {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
 
-        // 提取JWT token
+        // extract JWT token
         String token = extractToken(request);
         if (token == null) {
             return handleUnauthorized(exchange);
