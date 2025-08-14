@@ -1,5 +1,6 @@
 package com.example.fintech.common.config;
 
+import com.rabbitmq.client.AMQP;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -59,16 +60,19 @@ public class RabbitMQConfig {
     // Dead Letter Queues
     @Bean
     public Queue transactionDeadLetterQueue() {
+        System.out.println("=== Creating Transaction DLQ Bean ===");
         return QueueBuilder.durable(TRANSACTION_DLQ).build();
     }
 
     @Bean
     public Queue accountBalanceDeadLetterQueue() {
+        System.out.println("=== Creating AccountBalance DLQ Bean ===");
         return QueueBuilder.durable(ACCOUNT_BALANCE_DLQ).build();
     }
 
     @Bean
     public Queue notificationDeadLetterQueue() {
+        System.out.println("=== Creating Notification DLQ Bean ===");
         return QueueBuilder.durable(NOTIFICATION_DLQ).build();
     }
 
@@ -84,12 +88,20 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue accountBalanceQueue() {
-        return QueueBuilder.durable(ACCOUNT_BALANCE_QUEUE).build();
+        return QueueBuilder.durable(ACCOUNT_BALANCE_QUEUE)
+                .withArgument("x-dead-letter-exchange", ACCOUNT_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", "account.failed")
+                .withArgument("x-message-ttl",300000)
+                .build();
     }
 
     @Bean
     public Queue notificationQueue() {
-        return QueueBuilder.durable(NOTIFICATION_QUEUE).build();
+        return QueueBuilder.durable(NOTIFICATION_QUEUE)
+                .withArgument("x-dead-letter-exchange", NOTIFICATION_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", "account.failed")
+                .withArgument("x-message-ttl",300000)
+                .build();
     }
 
     @Bean
@@ -131,11 +143,42 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Declarables additionalDeclarables() {
+        System.out.println("=== Creating Declarables Bean ===");  // ← 添加这行
+        System.out.println("Creating DLQ: " + TRANSACTION_DLQ);    // ← 添加这行
+        return new Declarables(
+                transactionDeadLetterQueue(),
+                accountBalanceDeadLetterQueue(),
+                notificationDeadLetterQueue(),
+
+                transactionDlqBinding(),
+                accountBalanceDlqBinding(),
+                notificationDlqBinding()
+        );
+    }
+
+    @Bean
     public Binding transactionDlqBinding() {
         return BindingBuilder
                 .bind(transactionDeadLetterQueue())
                 .to(transactionExchange())
                 .with("transaction.failed");
+    }
+
+    @Bean
+    public Binding accountBalanceDlqBinding() {
+        return BindingBuilder
+                .bind(accountBalanceDeadLetterQueue())
+                .to(accountExchange())
+                .with("account.failed");
+    }
+
+    @Bean
+    public Binding notificationDlqBinding() {
+        return BindingBuilder
+                .bind(notificationDeadLetterQueue())
+                .to(notificationExchange())
+                .with("notification.failed");
     }
 
     // JSON converter

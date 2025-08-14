@@ -21,7 +21,11 @@ public class SecurityConfig extends BaseSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         configureBaseSecurity(http)
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints first - highest priority
                         .requestMatchers(getPublicEndpoints()).permitAll()
+                        // Test endpoints - allow without authentication
+                        .requestMatchers("/api/test/**").permitAll()
+                        // All other requests require authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(userContextFilter, UsernamePasswordAuthenticationFilter.class);
