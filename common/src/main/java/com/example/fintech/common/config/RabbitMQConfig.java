@@ -57,24 +57,6 @@ public class RabbitMQConfig {
         return new TopicExchange(NOTIFICATION_EXCHANGE, true, false);
     }
 
-    // Dead Letter Queues
-    @Bean
-    public Queue transactionDeadLetterQueue() {
-        System.out.println("=== Creating Transaction DLQ Bean ===");
-        return QueueBuilder.durable(TRANSACTION_DLQ).build();
-    }
-
-    @Bean
-    public Queue accountBalanceDeadLetterQueue() {
-        System.out.println("=== Creating AccountBalance DLQ Bean ===");
-        return QueueBuilder.durable(ACCOUNT_BALANCE_DLQ).build();
-    }
-
-    @Bean
-    public Queue notificationDeadLetterQueue() {
-        System.out.println("=== Creating Notification DLQ Bean ===");
-        return QueueBuilder.durable(NOTIFICATION_DLQ).build();
-    }
 
     // Queues
     @Bean
@@ -107,6 +89,25 @@ public class RabbitMQConfig {
     @Bean
     public Queue auditQueue() {
         return QueueBuilder.durable(AUDIT_QUEUE).build();
+    }
+
+    // Dead Letter Queues
+    @Bean
+    public Queue transactionDeadLetterQueue() {
+        System.out.println("=== Creating Transaction DLQ Bean ===");
+        return QueueBuilder.durable(TRANSACTION_DLQ).build();
+    }
+
+    @Bean
+    public Queue accountBalanceDeadLetterQueue() {
+        System.out.println("=== Creating AccountBalance DLQ Bean ===");
+        return QueueBuilder.durable(ACCOUNT_BALANCE_DLQ).build();
+    }
+
+    @Bean
+    public Queue notificationDeadLetterQueue() {
+        System.out.println("=== Creating Notification DLQ Bean ===");
+        return QueueBuilder.durable(NOTIFICATION_DLQ).build();
     }
 
     // Bindings
@@ -142,20 +143,20 @@ public class RabbitMQConfig {
                 .with("transaction.*");
     }
 
-    @Bean
-    public Declarables additionalDeclarables() {
-        System.out.println("=== Creating Declarables Bean ===");  // ← 添加这行
-        System.out.println("Creating DLQ: " + TRANSACTION_DLQ);    // ← 添加这行
-        return new Declarables(
-                transactionDeadLetterQueue(),
-                accountBalanceDeadLetterQueue(),
-                notificationDeadLetterQueue(),
-
-                transactionDlqBinding(),
-                accountBalanceDlqBinding(),
-                notificationDlqBinding()
-        );
-    }
+//    @Bean
+//    public Declarables additionalDeclarables() {
+//        System.out.println("=== Creating Declarables Bean ===");  // ← 添加这行
+//        System.out.println("Creating DLQ: " + TRANSACTION_DLQ);    // ← 添加这行
+//        return new Declarables(
+//                transactionDeadLetterQueue(),
+//                accountBalanceDeadLetterQueue(),
+//                notificationDeadLetterQueue(),
+//
+//                transactionDlqBinding(),
+//                accountBalanceDlqBinding(),
+//                notificationDlqBinding()
+//        );
+//    }
 
     @Bean
     public Binding transactionDlqBinding() {
