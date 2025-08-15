@@ -22,14 +22,14 @@ public class SecurityConfig extends BaseSecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         configureBaseSecurity(http)
                 .authorizeHttpRequests(auth -> auth
-                        // 公共端点
+                        // Public Request
                         .requestMatchers(getPublicEndpoints()).permitAll()
-                        // 用户服务特定的公共端点
+                        // 用户服务特定的公共端点 specify for user-service
                         .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/user/login").permitAll()
-                        // 其他端点需要认证
+                        // 其他端点需要认证 need authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
