@@ -110,7 +110,7 @@ public class DistributedTransactionCoordinator {
                                                                 String fromAccount, String toAccount, BigDecimal amount) {
         DistributedTransaction dtx = new DistributedTransaction();
         dtx.setTransactionId(transactionId);
-        dtx.setFromAccountNumber(toAccount);
+        dtx.setFromAccountNumber(fromAccount);
         dtx.setToAccountNumber(toAccount);
         dtx.setAmount(amount);
         dtx.setStatus(DistributedTransactionStatus.INITATED);

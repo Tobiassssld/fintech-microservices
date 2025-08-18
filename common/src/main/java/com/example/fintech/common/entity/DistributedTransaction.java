@@ -33,7 +33,11 @@ public class DistributedTransaction {
     private DistributedTransactionStatus status;
 
     @Column(nullable = false)
-    private LocalDateTime localDateTime;
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
 
     @Column(length = 1000)
     private String metadata;
