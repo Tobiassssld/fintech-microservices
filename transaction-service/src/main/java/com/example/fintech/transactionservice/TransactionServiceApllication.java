@@ -15,7 +15,8 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan(basePackages = {
         "com.example.fintech.transactionservice",
         "com.example.fintech.common.service",
-        "com.example.fintech.common.config"
+        "com.example.fintech.common.config",
+        "com.example.fintech.common.saga"
 })
 @Import(RabbitMQConfig.class)
 public class TransactionServiceApllication {

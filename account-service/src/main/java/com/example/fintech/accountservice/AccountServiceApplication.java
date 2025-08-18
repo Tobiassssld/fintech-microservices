@@ -15,7 +15,8 @@ import org.springframework.context.annotation.Bean;
 @ComponentScan(basePackages = {
         "com.example.fintech.accountservice",
         "com.example.fintech.common.service",
-        "com.example.fintech.common.config"
+        "com.example.fintech.common.config",
+        "com.example.fintech.common.saga"
 })
 public class AccountServiceApplication {
 
