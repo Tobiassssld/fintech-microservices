@@ -35,10 +35,11 @@
             <artifactId>jackson-annotations</artifactId>
         </dependency>
 
-        <!-- Lombok -->
+        <!-- Lombok - 移除version，使用父pom管理 -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
 
         <!-- RabbitMQ -->
@@ -66,6 +67,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <!-- 配置继承自父pom -->
             </plugin>
         </plugins>
     </build>
