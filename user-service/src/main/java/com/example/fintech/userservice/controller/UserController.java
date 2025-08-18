@@ -40,7 +40,7 @@ public class UserController {
             String token = jwtUtil.generateToken(request.getUsername());
             return ResponseEntity.ok(new LoginResponse(token, "login successful"));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid crefential");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credential");
         }
     }
 

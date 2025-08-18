@@ -20,21 +20,21 @@ public class RabbitMQInitializer implements ApplicationRunner {
         System.out.println("=== Initializing RabbitMQ Infrastructure ===");
 
         try {
-            // 创建 Exchanges
+            // create Exchanges
             createExchanges();
 
-            // 创建主队列
+            // create main queues
             createMainQueues();
 
-            // 创建死信队列
+            // create dead letter queues
             createDeadLetterQueues();
 
-            // 创建 Bindings
+            // create Bindings
             createBindings();
 
             System.out.println("RabbitMQ Infrastructure initialized successfully!");
 
-            // 验证所有队列
+            // veify all queue
             verifyAllQueues();
 
         } catch (Exception e) {
@@ -53,7 +53,7 @@ public class RabbitMQInitializer implements ApplicationRunner {
     private void createMainQueues() {
         System.out.println("Creating main queues...");
 
-        // 主队列需要配置死信交换机
+        // 主队列需要配置死信交换机 main queue need to build the declareQueue
         rabbitAdmin.declareQueue(
                 QueueBuilder.durable(RabbitMQConfig.TRANSACTION_QUEUE)
                         .withArgument("x-dead-letter-exchange", RabbitMQConfig.TRANSACTION_EXCHANGE)
@@ -86,7 +86,7 @@ public class RabbitMQInitializer implements ApplicationRunner {
     private void createDeadLetterQueues() {
         System.out.println("Creating dead letter queues...");
 
-        // 创建死信队列
+        // create DLQ
         Queue transactionDLQ = QueueBuilder.durable(RabbitMQConfig.TRANSACTION_DLQ).build();
         Queue accountBalanceDLQ = QueueBuilder.durable(RabbitMQConfig.ACCOUNT_BALANCE_DLQ).build();
         Queue notificationDLQ = QueueBuilder.durable(RabbitMQConfig.NOTIFICATION_DLQ).build();
@@ -104,7 +104,7 @@ public class RabbitMQInitializer implements ApplicationRunner {
     private void createBindings() {
         System.out.println("Creating bindings...");
 
-        // 主队列绑定
+        // main queues binding
         rabbitAdmin.declareBinding(
                 BindingBuilder.bind(new Queue(RabbitMQConfig.TRANSACTION_QUEUE))
                         .to(new TopicExchange(RabbitMQConfig.TRANSACTION_EXCHANGE))
@@ -129,7 +129,7 @@ public class RabbitMQInitializer implements ApplicationRunner {
                         .with("transaction.*")
         );
 
-        // 死信队列绑定
+        // DLQ Bindings
         rabbitAdmin.declareBinding(
                 BindingBuilder.bind(new Queue(RabbitMQConfig.TRANSACTION_DLQ))
                         .to(new TopicExchange(RabbitMQConfig.TRANSACTION_EXCHANGE))
@@ -154,14 +154,14 @@ public class RabbitMQInitializer implements ApplicationRunner {
     private void verifyAllQueues() {
         System.out.println("\nVerifying all queues:");
 
-        // 验证主队列
+        // verify main queue
         System.out.println("Main Queues:");
         verifyQueue(RabbitMQConfig.TRANSACTION_QUEUE);
         verifyQueue(RabbitMQConfig.ACCOUNT_BALANCE_QUEUE);
         verifyQueue(RabbitMQConfig.NOTIFICATION_QUEUE);
         verifyQueue(RabbitMQConfig.AUDIT_QUEUE);
 
-        // 验证死信队列
+        // verify DLQ
         System.out.println("\nDead Letter Queues:");
         verifyQueue(RabbitMQConfig.TRANSACTION_DLQ);
         verifyQueue(RabbitMQConfig.ACCOUNT_BALANCE_DLQ);
