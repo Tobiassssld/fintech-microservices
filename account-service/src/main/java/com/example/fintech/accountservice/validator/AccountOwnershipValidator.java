@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 public class AccountOwnershipValidator {
 
     public void validateOwnership(Account account, Long userId) {
-        if (!account.getUser().getId().equals(userId)) {
+        if (!account.getUserId().equals(userId)) {
             throw new SecurityException("Access denied: You don't own this account");
         }
     }

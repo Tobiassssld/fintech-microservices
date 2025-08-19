@@ -1,5 +1,6 @@
 package com.example.fintech.accountservice.filter;
 
+import com.example.fintech.common.context.UserContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,26 +22,31 @@ public class UserContextFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String userId = request.getHeader("X-User-Id");
+            String username = request.getHeader("X-Username");
+            String userRoles = request.getHeader("X-User-Roles");
 
-        // 从 API Gateway 传递的请求头中获取用户信息
-        String userId = request.getHeader("X-User-Id");
-        String userRoles = request.getHeader("X-User-Roles");
+            if (userId != null && username != null) {
+                // Set UserContext
+                UserContext.setUser(new UserContext.UserInfo(
+                        Long.parseLong(userId),
+                        username,
+                        userRoles
+                ));
 
-        System.out.println("Received X-User-Id: " + userId);
-        System.out.println("Received X-User-Roles: " + userRoles);
+                // Set Spring Security context
+                UsernamePasswordAuthenticationToken authToken =
+                        new UsernamePasswordAuthenticationToken(
+                                username, null,
+                                Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"))
+                        );
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
 
-        if (userId != null) {
-            // 设置认证信息
-            List<SimpleGrantedAuthority> authorities =
-                    Arrays.asList(new SimpleGrantedAuthority("ROLE_USER"));
-
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
-
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-            System.out.println("Set authentication for user: " + userId);
+            filterChain.doFilter(request, response);
+        } finally {
+            UserContext.clear();
         }
-
-        filterChain.doFilter(request, response);
     }
 }
