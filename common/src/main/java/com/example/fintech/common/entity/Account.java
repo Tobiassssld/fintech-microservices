@@ -21,12 +21,15 @@ public class Account {
     private BigDecimal balance;
 
     @Column(nullable = false)
-    private String currency; // USD, EUR, etc.
+    private String currency;
 
     @Column(nullable = false)
-    private String accountType; // CHECKING, SAVINGS, INVESTMENT
+    private String accountType;
 
-    @OneToOne(fetch = FetchType.EAGER)
+    @Column(nullable = false)
+    private String status = "ACTIVE";  // 添加状态字段
+
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -40,6 +43,9 @@ public class Account {
     protected void onCreate(){
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = "ACTIVE";
+        }
     }
 
     @PreUpdate

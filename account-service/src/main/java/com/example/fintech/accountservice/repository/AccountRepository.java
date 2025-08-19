@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
@@ -14,6 +15,10 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query("SELECT a FROM Account a WHERE a.user.id = :userId")
     Optional<Account> findByUserId(@Param("userId") Long userId);
+
+    // 添加这个方法 - 返回用户的所有账户
+    @Query("SELECT a FROM Account a WHERE a.user.id = :userId")
+    List<Account> findAllByUserId(@Param("userId") Long userId);
 
     boolean existsByAccountNumber(String accountNumber);
 
