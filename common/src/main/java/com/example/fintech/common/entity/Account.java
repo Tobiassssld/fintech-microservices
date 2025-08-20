@@ -17,11 +17,11 @@ public class Account {
     @Column(unique = true, nullable = false)
     private String accountNumber;
 
-    @Column(nullable = false)
-    private Long userId;  // Store user ID instead of User entity
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(nullable = false)
-    private String username;  // Store username for reference
+    private String username;
 
     @Column(nullable = false, precision = 19, scale = 4)
     private BigDecimal balance;
@@ -42,7 +42,7 @@ public class Account {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void onCreate() {
+    protected void onCreate(){
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         if (status == null) {
@@ -51,7 +51,7 @@ public class Account {
     }
 
     @PreUpdate
-    protected void onUpdate() {
+    protected void onUpdate(){
         updatedAt = LocalDateTime.now();
     }
 }
