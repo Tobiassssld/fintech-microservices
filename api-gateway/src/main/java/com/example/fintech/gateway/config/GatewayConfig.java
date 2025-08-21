@@ -33,8 +33,17 @@ public class GatewayConfig {
                 // Account Service - 全部需要认证
                 .route("account-service", r -> r
                         .path("/api/accounts/**")
-                        .filters(f -> f.filter(jwtAuthFilter))
+                        .filters(f -> f
+                                .filter(jwtAuthFilter)
+                                .filter((exchange, chain) -> {
+                                    // 添加调试日志
+                                    System.out.println("Request to: " + exchange.getRequest().getPath());
+                                    exchange.getRequest().getHeaders().forEach((k, v) ->
+                                            System.out.println("Header: " + k + " = " + v));
+                                    return chain.filter(exchange);
+                                }))
                         .uri("lb://ACCOUNT-SERVICE"))
+
 
                 // Transaction Service - 全部需要认证
                 .route("transaction-service", r -> r

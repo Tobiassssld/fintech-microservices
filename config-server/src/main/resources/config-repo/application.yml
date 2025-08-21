@@ -2,7 +2,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     database-platform: org.hibernate.dialect.MySQLDialect
   rabbitmq:
     host: localhost
@@ -12,7 +12,7 @@ spring:
     virtual-host: /
     connection-timeout: 30000
     requested-heartbeat: 30
-    # 启用发布确认
+    # enable publisher confirm type
     publisher-confirm-type: correlated
     publisher-returns: true
     template:

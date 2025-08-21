@@ -19,7 +19,7 @@ public abstract class BaseSecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
     }
 
-    // 定义公共端点
+    // define public endpoints
     protected String[] getPublicEndpoints() {
         return new String[]{
                 "/actuator/**",

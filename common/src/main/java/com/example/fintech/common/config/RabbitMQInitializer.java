@@ -8,7 +8,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-@Component
+// @Component  // 暂时注释掉
 @Order(1)
 public class RabbitMQInitializer implements ApplicationRunner {
 

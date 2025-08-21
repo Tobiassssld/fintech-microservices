@@ -80,11 +80,13 @@ public class RabbitMQConfig {
     @Bean
     public Queue notificationQueue() {
         return QueueBuilder.durable(NOTIFICATION_QUEUE)
-                .withArgument("x-dead-letter-exchange", NOTIFICATION_EXCHANGE)  // 应该是NOTIFICATION_EXCHANGE
-                .withArgument("x-dead-letter-routing-key", "notification.failed")  // 应该是notification.failed，不是account.failed
+                .withArgument("x-dead-letter-exchange", NOTIFICATION_EXCHANGE)  // 必须是 NOTIFICATION_EXCHANGE
+                .withArgument("x-dead-letter-routing-key", "notification.failed")  // 必须是 notification.failed
                 .withArgument("x-message-ttl", 300000)
                 .build();
     }
+
+    
     @Bean
     public Queue auditQueue() {
         return QueueBuilder.durable(AUDIT_QUEUE).build();
